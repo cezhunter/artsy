@@ -191,6 +191,36 @@ body {
     color: var(--text-muted);
 }
 
+.rotation-controls {
+    display: flex;
+    gap: 4px;
+    background: var(--bg-primary);
+    padding: 4px;
+    border-radius: var(--border-radius);
+}
+
+.rotation-btn {
+    flex: 1;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: none;
+    border-radius: calc(var(--border-radius) - 4px);
+    background: transparent;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.rotation-btn.active {
+    background: var(--accent);
+    color: var(--text-primary);
+}
+
+.rotation-btn:not(.active):hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
 .btn-small {
     padding: var(--spacing-sm) var(--spacing-md);
     border: none;

@@ -2,8 +2,15 @@
 # Art Display App - Startup Script for Raspberry Pi Kiosk Mode
 #
 # Usage:
-#   ./start.sh          - Start server only (for development)
-#   ./start.sh kiosk    - Start server and launch Chromium in kiosk mode
+#   ./start.sh [options] [kiosk]
+#
+# Options:
+#   --data-dir PATH    Set custom data directory (default: ./data)
+#
+# Examples:
+#   ./start.sh                           - Start server with default data dir
+#   ./start.sh --data-dir /mnt/usb/art   - Use custom data directory
+#   ./start.sh --data-dir ~/art kiosk    - Custom data dir + kiosk mode
 #
 # To run on boot, add to /etc/rc.local or create a systemd service
 
@@ -14,6 +21,30 @@ cd "$SCRIPT_DIR"
 PORT=5000
 DISPLAY_URL="http://localhost:$PORT/display"
 VENV_DIR="$SCRIPT_DIR/venv"
+DATA_DIR="$SCRIPT_DIR/data"
+
+# Parse arguments
+KIOSK_MODE=false
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        --data-dir)
+            DATA_DIR="$2"
+            shift 2
+            ;;
+        kiosk)
+            KIOSK_MODE=true
+            shift
+            ;;
+        *)
+            echo "Unknown option: $1"
+            echo "Usage: ./start.sh [--data-dir PATH] [kiosk]"
+            exit 1
+            ;;
+    esac
+done
+
+# Export data directory for the Python app
+export ARTSY_DATA_DIR="$DATA_DIR"
 
 # Colors for output
 RED='\033[0;31m'
@@ -39,20 +70,15 @@ fi
 # Activate virtual environment
 source "$VENV_DIR/bin/activate"
 
-# Check for Flask
-if ! python3 -c "import flask" 2>/dev/null; then
-    echo -e "${YELLOW}Installing Flask...${NC}"
-    pip install flask --quiet
-fi
-
-# Check for requests
-if ! python3 -c "import requests" 2>/dev/null; then
-    echo -e "${YELLOW}Installing requests...${NC}"
-    pip install requests --quiet
+# Install dependencies
+if ! python3 -c "import flask; import requests" 2>/dev/null; then
+    echo -e "${YELLOW}Installing dependencies...${NC}"
+    pip install -r requirements.txt --quiet
 fi
 
 # Create data directories
-mkdir -p data/images data/temp
+mkdir -p "$DATA_DIR/images" "$DATA_DIR/temp"
+echo "Data directory: $DATA_DIR"
 
 # Function to start the Flask server
 start_server() {
@@ -161,22 +187,19 @@ cleanup() {
 trap cleanup SIGINT SIGTERM
 
 # Main execution
-case "${1:-}" in
-    kiosk)
-        start_server
-        if [ $? -eq 0 ]; then
-            start_kiosk
-            show_info
-            # Wait indefinitely
-            wait
-        fi
-        ;;
-    *)
-        start_server
-        if [ $? -eq 0 ]; then
-            show_info
-            # Wait for server process
-            wait $SERVER_PID
-        fi
-        ;;
-esac
+if [ "$KIOSK_MODE" = true ]; then
+    start_server
+    if [ $? -eq 0 ]; then
+        start_kiosk
+        show_info
+        # Wait indefinitely
+        wait
+    fi
+else
+    start_server
+    if [ $? -eq 0 ]; then
+        show_info
+        # Wait for server process
+        wait $SERVER_PID
+    fi
+fi

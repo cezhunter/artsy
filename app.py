@@ -19,8 +19,8 @@ from artic_client import ArticClient, Artwork
 
 app = Flask(__name__)
 
-# Configuration
-DATA_DIR = Path("data")
+# Configuration - data directory can be set via ARTSY_DATA_DIR environment variable
+DATA_DIR = Path(os.environ.get("ARTSY_DATA_DIR", "data"))
 IMAGES_DIR = DATA_DIR / "images"
 TEMP_DIR = DATA_DIR / "temp"
 STATE_FILE = DATA_DIR / "state.json"
@@ -28,6 +28,8 @@ STATE_FILE = DATA_DIR / "state.json"
 # Ensure directories exist
 IMAGES_DIR.mkdir(parents=True, exist_ok=True)
 TEMP_DIR.mkdir(parents=True, exist_ok=True)
+
+print(f"Data directory: {DATA_DIR.absolute()}")
 
 # SSE clients
 sse_clients: list[Queue] = []
@@ -50,6 +52,7 @@ def get_default_state() -> dict:
         "timer_seconds": 30,
         "search_query": "impressionism",
         "paused": False,
+        "rotation": 0,
         "seen_artwork_ids": [],
         "saved_artworks": [],
         "current_search_offset": 0,
@@ -211,6 +214,7 @@ def get_state():
             "timer_seconds": state["timer_seconds"],
             "search_query": state["search_query"],
             "paused": state["paused"],
+            "rotation": state["rotation"],
             "saved_count": len(state["saved_artworks"]),
             "current_artwork": artwork_info,
         })
@@ -234,6 +238,7 @@ def sse_events():
                         "timer_seconds": state["timer_seconds"],
                         "search_query": state["search_query"],
                         "paused": state["paused"],
+                        "rotation": state["rotation"],
                         "saved_count": len(state["saved_artworks"]),
                         "current_artwork": artwork_info,
                     }
@@ -311,6 +316,29 @@ def set_timer():
     broadcast_update("timer_change", {"timer_seconds": seconds})
 
     return jsonify({"success": True, "timer_seconds": seconds})
+
+
+@app.route("/api/rotation", methods=["POST"])
+def set_rotation():
+    """Set image rotation (0, 90, 180, 270 degrees)."""
+    data = request.get_json() or {}
+    rotation = data.get("rotation")
+
+    try:
+        rotation = int(rotation)
+        if rotation not in (0, 90, 180, 270):
+            rotation = 0
+    except (TypeError, ValueError):
+        return jsonify({"error": "Invalid rotation value"}), 400
+
+    with state_lock:
+        state = load_state()
+        state["rotation"] = rotation
+        save_state(state)
+
+    broadcast_update("rotation_change", {"rotation": rotation})
+
+    return jsonify({"success": True, "rotation": rotation})
 
 
 @app.route("/api/query", methods=["POST"])

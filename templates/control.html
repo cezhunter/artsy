@@ -46,6 +46,16 @@
                         <button class="btn-small" id="queryBtn">Search</button>
                     </div>
                 </div>
+
+                <div class="setting-row">
+                    <label>Orientation</label>
+                    <div class="rotation-controls">
+                        <button class="rotation-btn active" data-rotation="0">0°</button>
+                        <button class="rotation-btn" data-rotation="90">90°</button>
+                        <button class="rotation-btn" data-rotation="180">180°</button>
+                        <button class="rotation-btn" data-rotation="270">270°</button>
+                    </div>
+                </div>
             </section>
 
             <!-- Controls -->
@@ -97,6 +107,7 @@
             paused: false,
             timerSeconds: 30,
             searchQuery: '',
+            rotation: 0,
             savedCount: 0,
             currentArtwork: null
         };
@@ -113,6 +124,7 @@
             queryInput: document.getElementById('queryInput'),
             queryBtn: document.getElementById('queryBtn'),
             queryRow: document.getElementById('queryRow'),
+            rotationBtns: document.querySelectorAll('.rotation-btn'),
             prevBtn: document.getElementById('prevBtn'),
             pauseBtn: document.getElementById('pauseBtn'),
             pauseIcon: document.getElementById('pauseIcon'),
@@ -168,6 +180,11 @@
             elements.timerInput.value = state.timerSeconds;
             elements.queryInput.value = state.searchQuery;
 
+            // Rotation buttons
+            elements.rotationBtns.forEach(btn => {
+                btn.classList.toggle('active', parseInt(btn.dataset.rotation) === state.rotation);
+            });
+
             // Artwork info
             updateArtworkDisplay();
         }
@@ -208,6 +225,7 @@
                     state.paused = data.paused;
                     state.timerSeconds = data.timer_seconds;
                     state.searchQuery = data.search_query;
+                    state.rotation = data.rotation || 0;
                     state.savedCount = data.saved_count;
                     state.currentArtwork = data.current_artwork;
                     break;
@@ -235,6 +253,10 @@
 
                 case 'pause_change':
                     state.paused = data.paused;
+                    break;
+
+                case 'rotation_change':
+                    state.rotation = data.rotation;
                     break;
             }
 
@@ -288,6 +310,13 @@
 
         elements.queryInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') elements.queryBtn.click();
+        });
+
+        elements.rotationBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const rotation = parseInt(btn.dataset.rotation);
+                apiCall('/api/rotation', 'POST', { rotation });
+            });
         });
 
         elements.prevBtn.addEventListener('click', () => {
