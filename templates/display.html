@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Art Display</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #000;
+        }
+
+        .display-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .artwork-image {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        .artwork-image.visible {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="display-container">
+        <img class="artwork-image" id="artworkImage" alt="Artwork">
+    </div>
+
+    <script>
+        let state = {
+            paused: false,
+            timerSeconds: 30
+        };
+
+        let timerInterval = null;
+        const image = document.getElementById('artworkImage');
+
+        function updateDisplay(artwork) {
+            if (!artwork || !artwork.image_url) {
+                image.classList.remove('visible');
+                return;
+            }
+
+            const newSrc = artwork.image_url + '?t=' + Date.now();
+            image.classList.remove('visible');
+            image.onload = () => {
+                image.classList.add('visible');
+            };
+            image.src = newSrc;
+        }
+
+        function updatePaused(paused) {
+            state.paused = paused;
+            if (paused) {
+                stopTimer();
+            } else {
+                startTimer();
+            }
+        }
+
+        function startTimer() {
+            stopTimer();
+            if (!state.paused && state.timerSeconds > 0) {
+                timerInterval = setInterval(() => {
+                    if (!state.paused) {
+                        fetch('/api/next', { method: 'POST' });
+                    }
+                }, state.timerSeconds * 1000);
+            }
+        }
+
+        function stopTimer() {
+            if (timerInterval) {
+                clearInterval(timerInterval);
+                timerInterval = null;
+            }
+        }
+
+        function connectSSE() {
+            const eventSource = new EventSource('/api/events');
+
+            eventSource.onmessage = (event) => {
+                try {
+                    const message = JSON.parse(event.data);
+                    handleMessage(message);
+                } catch (e) {
+                    console.error('Error parsing SSE message:', e);
+                }
+            };
+
+            eventSource.onerror = () => {
+                eventSource.close();
+                setTimeout(connectSSE, 3000);
+            };
+        }
+
+        function handleMessage(message) {
+            const { type, data } = message;
+
+            switch (type) {
+                case 'state':
+                    updatePaused(data.paused);
+                    state.timerSeconds = data.timer_seconds;
+                    updateDisplay(data.current_artwork);
+                    if (!data.paused) startTimer();
+                    break;
+
+                case 'mode_change':
+                case 'artwork_change':
+                case 'artwork_saved':
+                case 'artwork_deleted':
+                case 'query_change':
+                    updateDisplay(data.current_artwork);
+                    startTimer();
+                    break;
+
+                case 'timer_change':
+                    state.timerSeconds = data.timer_seconds;
+                    startTimer();
+                    break;
+
+                case 'pause_change':
+                    updatePaused(data.paused);
+                    break;
+            }
+        }
+
+        // Initialize
+        fetch('/api/init', { method: 'POST' })
+            .then(() => connectSSE())
+            .catch(console.error);
+    </script>
+</body>
+</html>

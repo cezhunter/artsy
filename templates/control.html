@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Art Display Control</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="app">
+        <header class="header">
+            <h1>Art Display</h1>
+            <div class="mode-toggle">
+                <button class="mode-btn active" id="discoverBtn" data-mode="discover">Discover</button>
+                <button class="mode-btn" id="displayBtn" data-mode="display">Display</button>
+            </div>
+        </header>
+
+        <main class="main">
+            <!-- Current Artwork Info -->
+            <section class="artwork-card" id="artworkCard">
+                <div class="artwork-thumbnail" id="artworkThumbnail">
+                    <div class="no-image">No Artwork</div>
+                </div>
+                <div class="artwork-details">
+                    <h2 class="artwork-title" id="artworkTitle">-</h2>
+                    <p class="artwork-artist" id="artworkArtist">-</p>
+                    <p class="artwork-meta" id="artworkMeta">-</p>
+                </div>
+            </section>
+
+            <!-- Settings -->
+            <section class="settings">
+                <div class="setting-row">
+                    <label for="timerInput">Timer (seconds)</label>
+                    <div class="input-group">
+                        <input type="number" id="timerInput" min="5" max="300" value="30">
+                        <button class="btn-small" id="timerBtn">Set</button>
+                    </div>
+                </div>
+
+                <div class="setting-row" id="queryRow">
+                    <label for="queryInput">Search Query</label>
+                    <div class="input-group">
+                        <input type="text" id="queryInput" placeholder="e.g., impressionism">
+                        <button class="btn-small" id="queryBtn">Search</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Controls -->
+            <section class="controls">
+                <div class="control-row main-controls">
+                    <button class="control-btn" id="prevBtn" disabled>
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z"/></svg>
+                        <span>Back</span>
+                    </button>
+                    <button class="control-btn pause-btn" id="pauseBtn">
+                        <svg viewBox="0 0 24 24" fill="currentColor" id="pauseIcon"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
+                        <svg viewBox="0 0 24 24" fill="currentColor" id="playIcon" style="display:none"><path d="M8 5v14l11-7z"/></svg>
+                        <span id="pauseText">Pause</span>
+                    </button>
+                    <button class="control-btn" id="nextBtn">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"/></svg>
+                        <span id="nextText">Skip</span>
+                    </button>
+                </div>
+
+                <div class="control-row action-controls">
+                    <button class="action-btn save-btn" id="saveBtn">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                        <span>Save</span>
+                    </button>
+                    <button class="action-btn delete-btn" id="deleteBtn" style="display:none">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+                        <span>Delete</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- Status -->
+            <section class="status">
+                <div class="status-item">
+                    <span class="status-label">Saved:</span>
+                    <span class="status-value" id="savedCount">0</span>
+                </div>
+                <div class="status-item" id="pausedStatus" style="display:none">
+                    <span class="status-badge paused">PAUSED</span>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        let state = {
+            mode: 'discover',
+            paused: false,
+            timerSeconds: 30,
+            searchQuery: '',
+            savedCount: 0,
+            currentArtwork: null
+        };
+
+        const elements = {
+            discoverBtn: document.getElementById('discoverBtn'),
+            displayBtn: document.getElementById('displayBtn'),
+            artworkThumbnail: document.getElementById('artworkThumbnail'),
+            artworkTitle: document.getElementById('artworkTitle'),
+            artworkArtist: document.getElementById('artworkArtist'),
+            artworkMeta: document.getElementById('artworkMeta'),
+            timerInput: document.getElementById('timerInput'),
+            timerBtn: document.getElementById('timerBtn'),
+            queryInput: document.getElementById('queryInput'),
+            queryBtn: document.getElementById('queryBtn'),
+            queryRow: document.getElementById('queryRow'),
+            prevBtn: document.getElementById('prevBtn'),
+            pauseBtn: document.getElementById('pauseBtn'),
+            pauseIcon: document.getElementById('pauseIcon'),
+            playIcon: document.getElementById('playIcon'),
+            pauseText: document.getElementById('pauseText'),
+            nextBtn: document.getElementById('nextBtn'),
+            nextText: document.getElementById('nextText'),
+            saveBtn: document.getElementById('saveBtn'),
+            deleteBtn: document.getElementById('deleteBtn'),
+            savedCount: document.getElementById('savedCount'),
+            pausedStatus: document.getElementById('pausedStatus')
+        };
+
+        async function apiCall(endpoint, method = 'POST', body = null) {
+            try {
+                const options = { method };
+                if (body) {
+                    options.headers = { 'Content-Type': 'application/json' };
+                    options.body = JSON.stringify(body);
+                }
+                const response = await fetch(endpoint, options);
+                return await response.json();
+            } catch (error) {
+                console.error('API error:', error);
+                return null;
+            }
+        }
+
+        function updateUI() {
+            // Mode buttons
+            elements.discoverBtn.classList.toggle('active', state.mode === 'discover');
+            elements.displayBtn.classList.toggle('active', state.mode === 'display');
+
+            // Show/hide mode-specific controls
+            elements.queryRow.style.display = state.mode === 'discover' ? 'flex' : 'none';
+            elements.prevBtn.disabled = state.mode === 'discover';
+            elements.saveBtn.style.display = state.mode === 'discover' ? 'flex' : 'none';
+            elements.deleteBtn.style.display = state.mode === 'display' ? 'flex' : 'none';
+
+            // Next button text
+            elements.nextText.textContent = state.mode === 'discover' ? 'Dislike' : 'Skip';
+
+            // Pause state
+            elements.pauseIcon.style.display = state.paused ? 'none' : 'block';
+            elements.playIcon.style.display = state.paused ? 'block' : 'none';
+            elements.pauseText.textContent = state.paused ? 'Play' : 'Pause';
+            elements.pausedStatus.style.display = state.paused ? 'flex' : 'none';
+
+            // Saved count
+            elements.savedCount.textContent = state.savedCount;
+
+            // Timer and query inputs
+            elements.timerInput.value = state.timerSeconds;
+            elements.queryInput.value = state.searchQuery;
+
+            // Artwork info
+            updateArtworkDisplay();
+        }
+
+        function updateArtworkDisplay() {
+            const artwork = state.currentArtwork;
+
+            if (!artwork) {
+                elements.artworkThumbnail.innerHTML = '<div class="no-image">No Artwork</div>';
+                elements.artworkTitle.textContent = '-';
+                elements.artworkArtist.textContent = '-';
+                elements.artworkMeta.textContent = '-';
+                return;
+            }
+
+            if (artwork.image_url) {
+                const imgUrl = artwork.image_url + '?t=' + Date.now();
+                elements.artworkThumbnail.innerHTML = `<img src="${imgUrl}" alt="${artwork.title || 'Artwork'}">`;
+            } else {
+                elements.artworkThumbnail.innerHTML = '<div class="no-image">No Image</div>';
+            }
+
+            elements.artworkTitle.textContent = artwork.title || 'Untitled';
+            elements.artworkArtist.textContent = artwork.artist_display || 'Unknown Artist';
+
+            const metaParts = [];
+            if (artwork.date_display) metaParts.push(artwork.date_display);
+            if (artwork.place_of_origin) metaParts.push(artwork.place_of_origin);
+            elements.artworkMeta.textContent = metaParts.join(' | ') || '-';
+        }
+
+        function handleMessage(message) {
+            const { type, data } = message;
+
+            switch (type) {
+                case 'state':
+                    state.mode = data.mode;
+                    state.paused = data.paused;
+                    state.timerSeconds = data.timer_seconds;
+                    state.searchQuery = data.search_query;
+                    state.savedCount = data.saved_count;
+                    state.currentArtwork = data.current_artwork;
+                    break;
+
+                case 'mode_change':
+                    state.mode = data.mode;
+                    state.currentArtwork = data.current_artwork;
+                    state.paused = false;
+                    break;
+
+                case 'artwork_change':
+                case 'query_change':
+                    state.currentArtwork = data.current_artwork;
+                    break;
+
+                case 'artwork_saved':
+                case 'artwork_deleted':
+                    state.savedCount = data.saved_count;
+                    state.currentArtwork = data.current_artwork;
+                    break;
+
+                case 'timer_change':
+                    state.timerSeconds = data.timer_seconds;
+                    break;
+
+                case 'pause_change':
+                    state.paused = data.paused;
+                    break;
+            }
+
+            updateUI();
+        }
+
+        function connectSSE() {
+            const eventSource = new EventSource('/api/events');
+
+            eventSource.onmessage = (event) => {
+                try {
+                    const message = JSON.parse(event.data);
+                    handleMessage(message);
+                } catch (e) {
+                    console.error('Error parsing SSE message:', e);
+                }
+            };
+
+            eventSource.onerror = () => {
+                eventSource.close();
+                setTimeout(connectSSE, 3000);
+            };
+        }
+
+        // Event listeners
+        elements.discoverBtn.addEventListener('click', () => {
+            apiCall('/api/mode', 'POST', { mode: 'discover' });
+        });
+
+        elements.displayBtn.addEventListener('click', () => {
+            apiCall('/api/mode', 'POST', { mode: 'display' });
+        });
+
+        elements.timerBtn.addEventListener('click', () => {
+            const seconds = parseInt(elements.timerInput.value);
+            if (seconds >= 5 && seconds <= 300) {
+                apiCall('/api/timer', 'POST', { seconds });
+            }
+        });
+
+        elements.timerInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') elements.timerBtn.click();
+        });
+
+        elements.queryBtn.addEventListener('click', () => {
+            const query = elements.queryInput.value.trim();
+            if (query) {
+                apiCall('/api/query', 'POST', { query });
+            }
+        });
+
+        elements.queryInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') elements.queryBtn.click();
+        });
+
+        elements.prevBtn.addEventListener('click', () => {
+            apiCall('/api/prev', 'POST');
+        });
+
+        elements.pauseBtn.addEventListener('click', () => {
+            apiCall('/api/pause', 'POST');
+        });
+
+        elements.nextBtn.addEventListener('click', () => {
+            apiCall('/api/next', 'POST');
+        });
+
+        elements.saveBtn.addEventListener('click', () => {
+            apiCall('/api/save', 'POST');
+        });
+
+        elements.deleteBtn.addEventListener('click', () => {
+            if (confirm('Delete this artwork?')) {
+                apiCall('/api/delete', 'POST');
+            }
+        });
+
+        // Initialize
+        apiCall('/api/init', 'POST').then(() => {
+            connectSSE();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+{
+  "mode": "discover",
+  "timer_seconds": 37,
+  "search_query": "Cezanne",
+  "paused": false,
+  "seen_artwork_ids": [
+    64729,
+    71562,
+    138,
+    70065,
+    90899,
+    27992,
+    13763,
+    71573,
+    17229,
+    4749,
+    159721,
+    90333,
+    14309,
+    109260,
+    14435,
+    84239,
+    111436,
+    16487,
+    62371
+  ],
+  "saved_artworks": [
+    {
+      "id": 90333,
+      "title": "An Alcove in the Art Students' League",
+      "artist_display": "Charles Courtney Curran (American, 1861\u20131942)",
+      "date_display": "1888",
+      "place_of_origin": "New York City",
+      "image_path": "data/images/90333_607d4ff1-578f-79ee-9980-ed133c743e64.jpg"
+    },
+    {
+      "id": 14309,
+      "title": "Coast Scene, Bathers",
+      "artist_display": "James McNeill Whistler (American, 1834\u20131903)",
+      "date_display": "1884\u201385",
+      "place_of_origin": "United States",
+      "image_path": "data/images/14309_5888c23a-635f-396a-117b-2223032c0201.jpg"
+    },
+    {
+      "id": 109260,
+      "title": "Man with a Pipe",
+      "artist_display": "Pablo Picasso\nSpanish, active France, 1881\u20131973",
+      "date_display": "1915",
+      "place_of_origin": "Spain",
+      "image_path": "data/images/109260_43bc66e2-95b2-fb3c-b9b1-232835bfd027.jpg"
+    },
+    {
+      "id": 84239,
+      "title": "Portrait of Sylvette David",
+      "artist_display": "Pablo Picasso\nSpanish, worked in France, 1881\u20131973",
+      "date_display": "1954",
+      "place_of_origin": "Spain",
+      "image_path": "data/images/84239_872371ff-d773-f209-8062-7f88c95f2691.jpg"
+    },
+    {
+      "id": 16487,
+      "title": "The Bay of Marseille, Seen from L'Estaque",
+      "artist_display": "Paul Cezanne (French, 1839\u20131906)",
+      "date_display": "c. 1885",
+      "place_of_origin": "France",
+      "image_path": "data/images/16487_d4ca6321-8656-3d3f-a362-2ee297b2b813.jpg"
+    }
+  ],
+  "current_search_offset": 0,
+  "display_history": [
+    16487,
+    84239,
+    90333,
+    109260,
+    14309
+  ],
+  "display_index": 4
+}
