@@ -113,7 +113,7 @@ start_kiosk() {
 
     # Hide cursor
     if command -v unclutter &> /dev/null; then
-        unclutter -idle 0.5 -root &
+        unclutter -idle 0 &
     fi
 
     # Start Chromium in kiosk mode
@@ -126,6 +126,7 @@ start_kiosk() {
             --disable-restore-session-state \
             --no-first-run \
             --start-fullscreen \
+            --password-store=basic \
             --autoplay-policy=no-user-gesture-required \
             "$DISPLAY_URL" &
     elif command -v chromium &> /dev/null; then
@@ -137,6 +138,7 @@ start_kiosk() {
             --disable-restore-session-state \
             --no-first-run \
             --start-fullscreen \
+            --password-store=basic \
             --autoplay-policy=no-user-gesture-required \
             "$DISPLAY_URL" &
     else
