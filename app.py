@@ -344,9 +344,7 @@ def set_rotation():
 def normalize_quotes(text: str) -> str:
     """Normalize smart/curly quotes to straight quotes for search."""
     # Smart double quotes to straight double quotes
-    text = text.replace('"', '"').replace('"', '"')
-    # Smart single quotes to straight single quotes
-    text = text.replace(''', "'").replace(''', "'")
+    text = text.replace('”', '"')
     return text
 
 
