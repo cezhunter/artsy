@@ -237,7 +237,11 @@
                     break;
 
                 case 'artwork_change':
+                    state.currentArtwork = data.current_artwork;
+                    break;
+
                 case 'query_change':
+                    state.searchQuery = data.search_query;
                     state.currentArtwork = data.current_artwork;
                     break;
 
