@@ -341,11 +341,20 @@ def set_rotation():
     return jsonify({"success": True, "rotation": rotation})
 
 
+def normalize_quotes(text: str) -> str:
+    """Normalize smart/curly quotes to straight quotes for search."""
+    # Smart double quotes to straight double quotes
+    text = text.replace('"', '"').replace('"', '"')
+    # Smart single quotes to straight single quotes
+    text = text.replace(''', "'").replace(''', "'")
+    return text
+
+
 @app.route("/api/query", methods=["POST"])
 def set_query():
     """Set search query for discover mode."""
     data = request.get_json() or {}
-    query = data.get("query", "").strip()
+    query = normalize_quotes(data.get("query", "").strip())
 
     if not query:
         return jsonify({"error": "Query cannot be empty"}), 400
