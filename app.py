@@ -115,6 +115,7 @@ def get_current_artwork_info(state: dict) -> dict | None:
                 "artist_display": current_discover_artwork.artist_display,
                 "date_display": current_discover_artwork.date_display,
                 "place_of_origin": current_discover_artwork.place_of_origin,
+                "description": current_discover_artwork.description,
                 "image_url": f"/api/image/temp" if current_discover_image_path else None,
             }
     else:  # display mode
@@ -404,6 +405,7 @@ def save_artwork():
             "artist_display": artwork.artist_display,
             "date_display": artwork.date_display,
             "place_of_origin": artwork.place_of_origin,
+            "description": artwork.description,
             "image_path": str(saved_path),
         })
 

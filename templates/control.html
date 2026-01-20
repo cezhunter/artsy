@@ -26,6 +26,13 @@
                     <h2 class="artwork-title" id="artworkTitle">-</h2>
                     <p class="artwork-artist" id="artworkArtist">-</p>
                     <p class="artwork-meta" id="artworkMeta">-</p>
+                    <div class="artwork-description-wrapper" id="descriptionWrapper" style="display: none;">
+                        <button class="description-toggle" id="descriptionToggle">
+                            <span id="descriptionToggleText">Show description</span>
+                            <svg viewBox="0 0 24 24" fill="currentColor" id="descriptionChevron"><path d="M7.41 8.59L12 13.17l4.59-4.58L18 10l-6 6-6-6 1.41-1.41z"/></svg>
+                        </button>
+                        <div class="artwork-description" id="artworkDescription"></div>
+                    </div>
                 </div>
             </section>
 
@@ -109,7 +116,8 @@
             searchQuery: '',
             rotation: 0,
             savedCount: 0,
-            currentArtwork: null
+            currentArtwork: null,
+            descriptionExpanded: false
         };
 
         const elements = {
@@ -119,6 +127,11 @@
             artworkTitle: document.getElementById('artworkTitle'),
             artworkArtist: document.getElementById('artworkArtist'),
             artworkMeta: document.getElementById('artworkMeta'),
+            descriptionWrapper: document.getElementById('descriptionWrapper'),
+            descriptionToggle: document.getElementById('descriptionToggle'),
+            descriptionToggleText: document.getElementById('descriptionToggleText'),
+            descriptionChevron: document.getElementById('descriptionChevron'),
+            artworkDescription: document.getElementById('artworkDescription'),
             timerInput: document.getElementById('timerInput'),
             timerBtn: document.getElementById('timerBtn'),
             queryInput: document.getElementById('queryInput'),
@@ -197,6 +210,7 @@
                 elements.artworkTitle.textContent = '-';
                 elements.artworkArtist.textContent = '-';
                 elements.artworkMeta.textContent = '-';
+                elements.descriptionWrapper.style.display = 'none';
                 return;
             }
 
@@ -214,6 +228,26 @@
             if (artwork.date_display) metaParts.push(artwork.date_display);
             if (artwork.place_of_origin) metaParts.push(artwork.place_of_origin);
             elements.artworkMeta.textContent = metaParts.join(' | ') || '-';
+
+            // Handle description
+            if (artwork.description) {
+                elements.descriptionWrapper.style.display = 'block';
+                elements.artworkDescription.innerHTML = artwork.description;
+                updateDescriptionToggle();
+            } else {
+                elements.descriptionWrapper.style.display = 'none';
+            }
+        }
+
+        function updateDescriptionToggle() {
+            elements.artworkDescription.classList.toggle('expanded', state.descriptionExpanded);
+            elements.descriptionChevron.classList.toggle('expanded', state.descriptionExpanded);
+            elements.descriptionToggleText.textContent = state.descriptionExpanded ? 'Hide description' : 'Show description';
+        }
+
+        function toggleDescription() {
+            state.descriptionExpanded = !state.descriptionExpanded;
+            updateDescriptionToggle();
         }
 
         function handleMessage(message) {
@@ -344,6 +378,8 @@
                 apiCall('/api/delete', 'POST');
             }
         });
+
+        elements.descriptionToggle.addEventListener('click', toggleDescription);
 
         // Initialize
         apiCall('/api/init', 'POST').then(() => {

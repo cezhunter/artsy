@@ -148,6 +148,61 @@ body {
     color: var(--text-muted);
 }
 
+.artwork-description-wrapper {
+    margin-top: var(--spacing-sm);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding-top: var(--spacing-sm);
+}
+
+.description-toggle {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    background: none;
+    border: none;
+    color: var(--accent);
+    font-size: 0.85rem;
+    cursor: pointer;
+    padding: 0;
+    transition: color 0.2s ease;
+}
+
+.description-toggle:hover {
+    color: var(--accent-hover);
+}
+
+.description-toggle svg {
+    width: 20px;
+    height: 20px;
+    transition: transform 0.2s ease;
+}
+
+.description-toggle svg.expanded {
+    transform: rotate(180deg);
+}
+
+.artwork-description {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, margin-top 0.3s ease;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.artwork-description.expanded {
+    max-height: 10000px;
+    margin-top: var(--spacing-sm);
+}
+
+.artwork-description p {
+    margin-bottom: var(--spacing-xs);
+}
+
+.artwork-description p:last-child {
+    margin-bottom: 0;
+}
+
 /* Settings */
 .settings {
     display: flex;
